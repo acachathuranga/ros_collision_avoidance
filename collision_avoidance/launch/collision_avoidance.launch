@@ -1,0 +1,6 @@
+<launch>
+  <!-- Launch Collision Avoidance Safety for Command Velocity -->
+  <node pkg="collision_avoidance" type="main.py" name="collision_avoidance_guard" output="screen">
+    <rosparam command="load" file="$(find collision_avoidance)/config/parameters.yaml"/>
+  </node>
+</launch>

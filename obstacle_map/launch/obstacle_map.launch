@@ -1,0 +1,6 @@
+<launch>
+  <!-- Launch the Robot Obstacle Map Publisher-->
+  <node pkg="obstacle_map" type="main.py" name="obstacle_map_publisher" output="screen">
+    <rosparam command="load" file="$(find obstacle_map)/config/parameters.yaml"/>
+  </node>
+</launch>

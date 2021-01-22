@@ -1,0 +1,22 @@
+# Map topic
+map_topic: /obstacle_map
+
+# Footprint Topic (std_msgs/String)
+robot_footprint_topic: /robot_footprint
+# Default Footprint
+robot_footprint: "[[0.35,0.2],[0.35,-0.2],[-0.35,-0.2],[-0.35,0.2]]"
+# robot_footprint: "[[0.35,0.2],[0.35,-0.2],[0.06,-0.2],[0.06,-0.33],[-0.64,-0.33],[-0.64,0.33],[0.06,0.33],[0.06,0.2]]"
+
+# Velocity Input Topic
+cmd_vel_input: /cmd_vel_muxed
+# Velocity Output Topic
+cmd_vel_output: /cmd_vel_safe
+
+# Slowing time look ahead
+slowing_look_ahead_time: 2
+# Stopping time look ahead
+stopping_look_ahead_time: 0.2
+# Collision status reporting topic
+collision_status: "collision_imminent"
+# Collision avoidance enable topic 
+avoidance_enable: "enable_avoidance"

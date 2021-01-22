@@ -1,0 +1,28 @@
+# Depth Map sources publishing sensor_msgs/PointCloud2 messages
+depth_sources: top_lidar, bottom_lidar, front_depth_camera #, rear_depth_camera
+
+# Source parameters
+# Obstacle Probability threshold (How many depth points needs to be registered within a grid cell, in order for an obstacle to be recognised)
+front_depth_camera: {topic: /front_depth_cam/depth_registered/points, sensor_frame: front_depth_cam_color_optical_frame, parent_frame: base_link, obstacle_probability_threshold: 20}
+rear_depth_camera: {topic: /rear_depth_cam/depth_registered/points, sensor_frame: rear_depth_cam_color_optical_frame, parent_frame: base_link, obstacle_probability_threshold: 20}
+top_lidar: {topic: /top_laser_point_cloud, sensor_frame: top_laser, parent_frame: base_link, obstacle_probability_threshold: 10}
+bottom_lidar: {topic: /pointcloudlidar, sensor_frame: laser, parent_frame: base_link, obstacle_probability_threshold: 2}
+
+
+# Map parameters
+map_parameters: {x_min: -1.0, x_max: 1.0, y_min: -1.0, y_max: 1.0, z_min: 0.05, z_max: 1.0, resolution: 0.025}
+
+# Averaging window for each depth source frames
+averaging_window: 1
+# Occupancy Grid publish rate
+map_publish_rate: 5
+# Map topic
+map_topic: obstacle_map
+
+# Footprint area will be filtered out from obstacle map, if set to true
+exclude_footprint: true
+# Footprint Topic (std_msgs/String)
+robot_footprint_topic: /robot_footprint
+# Default Footprint
+robot_footprint: "[[0.35,0.2],[0.35,-0.2],[-0.35,-0.2],[-0.35,0.2]]"
+# robot_footprint: "[[0.35,0.2],[0.35,-0.2],[0.06,-0.2],[0.06,-0.33],[-0.64,-0.33],[-0.64,0.33],[0.06,0.33],[0.06,0.2]]"
