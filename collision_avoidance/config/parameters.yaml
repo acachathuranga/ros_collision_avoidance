@@ -20,3 +20,11 @@ stopping_look_ahead_time: 0.2
 collision_status: "collision_imminent"
 # Collision avoidance enable topic 
 avoidance_enable: "enable_avoidance"
+
+# Indicator Light topic
+indicator_topic: /tower_lights_cmd
+
+# Teleop Joy topic to Enable / Disable Collision Avoidance
+joy_topic: /joy1/joy
+# Enable / Sisable Button
+enable_joy_button: 10

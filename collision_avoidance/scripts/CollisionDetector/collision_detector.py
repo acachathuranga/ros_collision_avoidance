@@ -1,16 +1,22 @@
 #! /usr/bin/env python
 
 import rospy
+import rospkg
 from nav_msgs.msg import OccupancyGrid
 from geometry_msgs.msg import Twist
 from utilities.robot_footprint_reader import FootPrint
 from utilities.spatial_tools import MatrixExp6, VecTose3
+from utilities.status_indicator import Indicator
+from utilities.audio_player import AudioPlayer
 from std_msgs.msg import Bool
 from std_srvs.srv import SetBool, SetBoolRequest, SetBoolResponse
+from sensor_msgs.msg import Joy
 import numpy as np
+import os
 
 class CollisionDetector():
     DEBUG = False
+    TELEOP_ENABLED = True
 
     def __init__(self):
         map_topic = rospy.get_param(rospy.get_name() + "/map_topic", "/obstacle_map")
@@ -27,6 +33,12 @@ class CollisionDetector():
         if (cmd_vel_output_topic[0] != '/'): cmd_vel_output_topic = rospy.get_name() + "/" + cmd_vel_output_topic
         if (collision_status_topic[0] != '/'): collision_status_topic = rospy.get_name() + "/" + collision_status_topic
         if (collision_avoidance_enable_service[0] != '/'): collision_avoidance_enable_service = rospy.get_name() + "/" + collision_avoidance_enable_service
+
+        # Indicator
+        self.indicator = Indicator()
+
+        # Audio
+        self.audio = AudioPlayer(os.path.join(rospkg.RosPack().get_path('collision_avoidance'), 'media'))
 
         self.obstacle_map = rospy.Subscriber(map_topic, OccupancyGrid, self.map_callback)
         self.cmd_vel_sub = rospy.Subscriber(cmd_vel_input_topic, Twist, self.cmd_vel_callback)
@@ -75,6 +87,23 @@ class CollisionDetector():
             self.debug_map.info.origin.position.x = -self.map_x_range * self.resolution / 2
             self.debug_map.info.origin.position.y = -self.map_y_range * self.resolution / 2
             self.debug_map.info.origin.orientation.w = 1.0
+
+        if self.TELEOP_ENABLED:
+            # Teleop Enable / Disable with  Joystick
+            teleop_topic = rospy.get_param(rospy.get_name() + "/joy_topic", "/joy1/joy")
+            self.teleop_button = rospy.get_param(rospy.get_name() + "/enable_joy_button", 10)
+            # Namespace fixing
+            if (teleop_topic[0] != '/'): teleop_topic = rospy.get_name() + "/" + teleop_topic
+            self.joy_sub = rospy.Subscriber(teleop_topic, Joy, self.teleop_callback)
+    
+    def teleop_callback(self, msg):
+        if msg.buttons[self.teleop_button]:
+            self.enable_avoidance = (not self.enable_avoidance)
+            if self.enable_avoidance:
+                state = "Enabled"
+            else:
+                state = "Disabled"
+            rospy.loginfo("%s : Collision Avoidance %s"%(rospy.get_name(), state))
 
     def enabler_callback(self, req):
         self.enable_avoidance = req.data
@@ -125,6 +154,7 @@ class CollisionDetector():
         # If collision avoidance is disabled, relay original command velocity
         if not self.enable_avoidance:
             self.cmd_vel_pub.publish(cmd_vel)
+            self.indicator.error()
             return
 
         # Perform obstacle avoidance
@@ -140,16 +170,17 @@ class CollisionDetector():
             T = MatrixExp6(vel_se3 * time)
 
             footprint_projection = np.dot(T, self.footprint)
-            mask =  (footprint_projection[0,:] > (-self.map_x_range * self.resolution / 2)) & \
-                    (footprint_projection[0,:] < (self.map_x_range * self.resolution / 2)) & \
-                    (footprint_projection[1,:] > (-self.map_y_range * self.resolution / 2)) & \
-                    (footprint_projection[1,:] < (self.map_y_range * self.resolution / 2))
         
             # Coverting footprint projection to cell values
             footprint_projection[0, :] = np.round(footprint_projection[0, :] / self.resolution + self.map_x_range / 2)
             footprint_projection[1, :] = np.round(footprint_projection[1, :] / self.resolution + self.map_y_range / 2)
 
-            # Type casting
+            mask =  (footprint_projection[0,:] >= 0) & \
+                    (footprint_projection[0,:] < self.map_x_range) & \
+                    (footprint_projection[1,:] >= 0) & \
+                    (footprint_projection[1,:] < self.map_y_range)
+
+            # Filtering out of boundary values and Type casting
             footprint_projection = footprint_projection[:2, mask].astype(dtype=int)
 
             cost = np.sum(self.map[footprint_projection[0, :], footprint_projection[1, :]])
@@ -171,15 +202,33 @@ class CollisionDetector():
                 break
         
         # Collision imminent
-        if (velocity_scale < 0.01):
+        if (velocity_scale > 0.9):
+            self.indicator.normal()
+        elif (velocity_scale > 0.01):
+            self.indicator.warning()
+        else:
             status = Bool()
             status.data = True
             self.collision_status_publisher.publish(status)
+            self.indicator.critical()
 
         cmd_vel.angular.z = cmd_vel.angular.z * velocity_scale
         cmd_vel.linear.x = cmd_vel.linear.x * velocity_scale
+
+        # Audio Notification
+        if (velocity_scale > 0.01):
+            if ((np.fabs(cmd_vel.linear.x) + np.fabs(cmd_vel.angular.z)) > 0.01):
+                self.audio.play("moving")
+            else :
+                self.audio.stop()
+        else:
+            self.audio.play("obstacle")
+        
         self.cmd_vel_pub.publish(cmd_vel)
-       
+
+
+
+
 if __name__ == '__main__':
     rospy.init_node('collision_detector')
     rospy.loginfo("Collision Detector Started")
