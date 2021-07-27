@@ -153,6 +153,12 @@ class CollisionDetector():
 
         # If collision avoidance is disabled, relay original command velocity
         if not self.enable_avoidance:
+            # Audio Notification
+            if ((np.fabs(cmd_vel.linear.x) + np.fabs(cmd_vel.angular.z)) > 0.001):
+                self.audio.play("moving")
+            else :
+                self.audio.stop()
+
             self.cmd_vel_pub.publish(cmd_vel)
             self.indicator.error()
             return
@@ -217,7 +223,7 @@ class CollisionDetector():
 
         # Audio Notification
         if (velocity_scale > 0.01):
-            if ((np.fabs(cmd_vel.linear.x) + np.fabs(cmd_vel.angular.z)) > 0.01):
+            if ((np.fabs(cmd_vel.linear.x) + np.fabs(cmd_vel.angular.z)) > 0.001):
                 self.audio.play("moving")
             else :
                 self.audio.stop()
