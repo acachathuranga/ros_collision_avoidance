@@ -164,6 +164,7 @@ class CollisionDetector():
 
             self.cmd_vel_pub.publish(cmd_vel)
             self.indicator.error()
+            self.display.obstacle()
             return
 
         # Perform obstacle avoidance

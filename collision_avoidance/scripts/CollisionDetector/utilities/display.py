@@ -20,8 +20,10 @@ class Display():
         
 
         # Starting Connection
-        self.client = mqtt.Client("obstacle_status_publisher")
+        self.client = mqtt.Client()
+        rospy.loginfo("Connecting to Mqtt broker")
         self.client.connect(address)
+        self.client.loop_start()
         rospy.sleep(0.8)    # Publisher initialization tiom
         
         # Start display thread
@@ -32,19 +34,21 @@ class Display():
         # Initialize default indication
         self.current_indication = ""
         self.no_obstacle()
-
+        
+        rospy.loginfo("MQTT broker connected")
 
     def display_thread(self):
         while not(rospy.is_shutdown()):
             with self.event:
                 # Thread wait
-                self.event.wait(2)
+                self.event.wait(5)
                 if (self.current_indication != self.indication):
                     self.display_indication(self.indication)
                     self.current_indication = self.indication
 
     def display_indication(self, status):
-        rospy.sleep(0.01)
+        # rospy.sleep(0.05)
+        # rospy.logdebug("Display set to: %s" %status)
         self.client.publish(self.topic, status)
 
     def display_obstacle(self, status):
