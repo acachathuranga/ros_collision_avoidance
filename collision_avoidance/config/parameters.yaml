@@ -24,6 +24,10 @@ avoidance_enable: "enable_avoidance"
 
 # Indicator Light topic
 indicator_topic: /tower_lights_cmd
+mqtt_address: localhost
+mqtt_topic: obstacle_proximity
+mqtt_obstacle_msg: obstacle
+mqtt_obstacle_free_msg: clear
 
 # Teleop Joy topic to Enable / Disable Collision Avoidance
 joy_topic: /joy1/joy

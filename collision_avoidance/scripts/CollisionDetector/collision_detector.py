@@ -8,6 +8,7 @@ from utilities.robot_footprint_reader import FootPrint
 from utilities.spatial_tools import MatrixExp6, VecTose3
 from utilities.status_indicator import Indicator
 from utilities.audio_player import AudioPlayer
+from utilities.display import Display
 from std_msgs.msg import Bool
 from std_srvs.srv import SetBool, SetBoolRequest, SetBoolResponse
 from sensor_msgs.msg import Joy
@@ -36,6 +37,8 @@ class CollisionDetector():
 
         # Indicator
         self.indicator = Indicator()
+        # Display
+        self.display = Display()
 
         # Audio
         self.audio = AudioPlayer(os.path.join(rospkg.RosPack().get_path('collision_avoidance'), 'media'))
@@ -210,6 +213,7 @@ class CollisionDetector():
         # Collision imminent
         if (velocity_scale > 0.9):
             self.indicator.normal()
+            self.display.no_obstacle()
         elif (velocity_scale > 0.01):
             self.indicator.warning()
         else:
@@ -217,6 +221,7 @@ class CollisionDetector():
             status.data = True
             self.collision_status_publisher.publish(status)
             self.indicator.critical()
+            self.display.obstacle()
 
         cmd_vel.angular.z = cmd_vel.angular.z * velocity_scale
         cmd_vel.linear.x = cmd_vel.linear.x * velocity_scale
