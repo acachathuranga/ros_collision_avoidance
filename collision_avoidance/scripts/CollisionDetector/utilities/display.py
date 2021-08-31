@@ -15,10 +15,11 @@ class Display():
         # MQTT parameters
         address = rospy.get_param(rospy.get_name() + "/mqtt_address", "localhost")
         self.topic = rospy.get_param(rospy.get_name() + "/mqtt_topic", "obstacle_proximity")
-        self.obstacle_msg = rospy.get_param(rospy.get_name() + "/mqtt_obstacle_msg", "obstacle")
-        self.obstacle_clear_msg = rospy.get_param(rospy.get_name() + "/mqtt_obstacle_free_msg", "clear")
+        self.near_collision_msg = rospy.get_param(rospy.get_name() + "/mqtt_near_collision_msg", "near_collision")
+        self.iminent_collision_msg = rospy.get_param(rospy.get_name() + "/mqtt_iminent_collision_msg", "iminent_collison")
+        self.obstacle_free_msg = rospy.get_param(rospy.get_name() + "/mqtt_obstacle_free_msg", "clear")
+        self.obstacle_safety_off_msg = rospy.get_param(rospy.get_name() + "/mqtt_obstacle_safety_off_msg", "safety_off")
         
-
         # Starting Connection
         self.client = mqtt.Client()
         rospy.loginfo("Connecting to Mqtt broker")
@@ -51,21 +52,23 @@ class Display():
         # rospy.logdebug("Display set to: %s" %status)
         self.client.publish(self.topic, status)
 
-    def display_obstacle(self, status):
-        if status:
-            self.indication = self.obstacle_msg
-        else:
-            self.indication = self.obstacle_clear_msg
+    def display(self, status):
+        self.indication = status
         with self.event:
             self.event.notifyAll()
             
     
     def no_obstacle(self):
-        self.display_obstacle(False)
-        
+        self.display(self.obstacle_free_msg)
+
+    def obstacle_detection_off(self): 
+        self.display(self.obstacle_safety_off_msg)
     
-    def obstacle(self):
-        self.display_obstacle(True)
+    def iminent_collision(self):
+        self.display(self.iminent_collision_msg)
+
+    def near_collision(self):
+        self.display(self.near_collision_msg)
 
     
 

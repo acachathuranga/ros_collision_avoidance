@@ -164,7 +164,7 @@ class CollisionDetector():
 
             self.cmd_vel_pub.publish(cmd_vel)
             self.indicator.error()
-            self.display.obstacle()
+            self.display.obstacle_detection_off()
             return
 
         # Perform obstacle avoidance
@@ -196,12 +196,13 @@ class CollisionDetector():
             self.display.no_obstacle()
         elif (velocity_scale > 0.01):
             self.indicator.warning()
+            self.display.near_collision()
         else:
             status = Bool()
             status.data = True
             self.collision_status_publisher.publish(status)
             self.indicator.critical()
-            self.display.obstacle()
+            self.display.iminent_collision()
 
         cmd_vel.angular.z = cmd_vel.angular.z * velocity_scale
         cmd_vel.linear.x = cmd_vel.linear.x * velocity_scale
