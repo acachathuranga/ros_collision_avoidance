@@ -10,7 +10,7 @@ bottom_lidar: {topic: /pointcloudlidar, sensor_frame: laser, parent_frame: base_
 
 
 # Map parameters
-map_parameters: {x_min: -1.0, x_max: 1.0, y_min: -1.0, y_max: 1.0, z_min: 0.05, z_max: 1.0, resolution: 0.025}
+map_parameters: {x_min: -1.0, x_max: 1.0, y_min: -1.0, y_max: 1.0, z_min: 0.05, z_max: 1.0, resolution: 0.01}
 
 # Averaging window for each depth source frames
 averaging_window: 1
