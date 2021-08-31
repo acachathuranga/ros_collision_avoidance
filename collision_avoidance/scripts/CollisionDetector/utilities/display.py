@@ -16,7 +16,7 @@ class Display():
         address = rospy.get_param(rospy.get_name() + "/mqtt_address", "localhost")
         self.topic = rospy.get_param(rospy.get_name() + "/mqtt_topic", "obstacle_proximity")
         self.near_collision_msg = rospy.get_param(rospy.get_name() + "/mqtt_near_collision_msg", "near_collision")
-        self.iminent_collision_msg = rospy.get_param(rospy.get_name() + "/mqtt_iminent_collision_msg", "iminent_collison")
+        self.imminent_collision_msg = rospy.get_param(rospy.get_name() + "/mqtt_imminent_collision_msg", "imminent_collison")
         self.obstacle_free_msg = rospy.get_param(rospy.get_name() + "/mqtt_obstacle_free_msg", "clear")
         self.obstacle_safety_off_msg = rospy.get_param(rospy.get_name() + "/mqtt_obstacle_safety_off_msg", "safety_off")
         
@@ -64,8 +64,8 @@ class Display():
     def obstacle_detection_off(self): 
         self.display(self.obstacle_safety_off_msg)
     
-    def iminent_collision(self):
-        self.display(self.iminent_collision_msg)
+    def imminent_collision(self):
+        self.display(self.imminent_collision_msg)
 
     def near_collision(self):
         self.display(self.near_collision_msg)

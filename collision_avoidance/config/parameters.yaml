@@ -28,7 +28,7 @@ mqtt_address: localhost
 mqtt_topic: obstacle_proximity
 mqtt_obstacle_safety_off_msg: safety_off
 mqtt_obstacle_free_msg: clear
-mqtt_iminent_collision_msg: iminent_collison
+mqtt_imminent_collision_msg: imminent_collision
 mqtt_near_collision_msg: near_collision
 
 # Teleop Joy topic to Enable / Disable Collision Avoidance

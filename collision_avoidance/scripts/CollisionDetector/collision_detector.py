@@ -178,7 +178,7 @@ class CollisionDetector():
 
         # For high speed collisions, check motion feasibility with reduced speeds
         if (velocity_scale < 0.01):
-            cmd_vel.angular.z = np.clip(a=cmd_vel.angular.z, a_min=-0.025, a_max=0.025)
+            cmd_vel.angular.z = np.clip(a=cmd_vel.angular.z, a_min=-0.1, a_max=0.1)
             cmd_vel.linear.x = np.clip(a=cmd_vel.linear.x, a_min=-0.1, a_max=0.1)
 
             if(not self.positive_collision(cmd_vel, self.stopping_look_ahead_time)):
@@ -188,7 +188,9 @@ class CollisionDetector():
                     # DEBUG print
                     rospy.logwarn("Moving with reduced speed due to predicted collision. Vel[ang, lin]: %.3f, %.3f"%(cmd_vel.angular.z * velocity_scale, cmd_vel.linear.x * velocity_scale))
             else:
-                rospy.logwarn("Collision for slow speed also. Vel[ang, lin]: %.3f, %.3f"%(cmd_vel.angular.z, cmd_vel.linear.x))
+                if self.DEBUG:
+                    # DEBUG print
+                    rospy.logwarn("Collision for slow speed also. Vel[ang, lin]: %.3f, %.3f"%(cmd_vel.angular.z, cmd_vel.linear.x))
         
         # Collision imminent
         if (velocity_scale > 0.9):
@@ -202,7 +204,7 @@ class CollisionDetector():
             status.data = True
             self.collision_status_publisher.publish(status)
             self.indicator.critical()
-            self.display.iminent_collision()
+            self.display.imminent_collision()
 
         cmd_vel.angular.z = cmd_vel.angular.z * velocity_scale
         cmd_vel.linear.x = cmd_vel.linear.x * velocity_scale
