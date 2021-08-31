@@ -168,48 +168,27 @@ class CollisionDetector():
             return
 
         # Perform obstacle avoidance
-
-        vel_vector = np.zeros((6))
-        vel_vector[2] = cmd_vel.angular.z
-        vel_vector[3] = cmd_vel.linear.x
-        vel_se3 = VecTose3(vel_vector)
-
         velocity_scale = 1
 
         for step, time in enumerate(self.look_ahead_steps):
-            T = MatrixExp6(vel_se3 * time)
-
-            footprint_projection = np.dot(T, self.footprint)
-        
-            # Coverting footprint projection to cell values
-            footprint_projection[0, :] = np.round(footprint_projection[0, :] / self.resolution + self.map_x_range / 2)
-            footprint_projection[1, :] = np.round(footprint_projection[1, :] / self.resolution + self.map_y_range / 2)
-
-            mask =  (footprint_projection[0,:] >= 0) & \
-                    (footprint_projection[0,:] < self.map_x_range) & \
-                    (footprint_projection[1,:] >= 0) & \
-                    (footprint_projection[1,:] < self.map_y_range)
-
-            # Filtering out of boundary values and Type casting
-            footprint_projection = footprint_projection[:2, mask].astype(dtype=int)
-
-            cost = np.sum(self.map[footprint_projection[0, :], footprint_projection[1, :]])
-
-            if (cost > 0):
+            if(self.positive_collision(cmd_vel, time)):
                 # Update velocity scale according to obstacle proximity
                 velocity_scale = self.look_ahead_step_velocity_scale[step]
+                break
 
+        # For high speed collisions, check motion feasibility with reduced speeds
+        if (velocity_scale < 0.01):
+            cmd_vel.angular.z = np.clip(a=cmd_vel.angular.z, a_min=-0.025, a_max=0.025)
+            cmd_vel.linear.x = np.clip(a=cmd_vel.linear.x, a_min=-0.1, a_max=0.1)
+
+            if(not self.positive_collision(cmd_vel, self.stopping_look_ahead_time)):
+                # Set velocity scale to half, for safety
+                velocity_scale = 0.5
                 if self.DEBUG:
                     # DEBUG print
-                    rospy.logwarn("Collision in %.2f second"%time)
-                    map_data = np.zeros((self.map_x_range, self.map_y_range))
-                    map_data[footprint_projection[0, :].astype(dtype=int), footprint_projection[1, :].astype(dtype=int)] = 40
-                    self.debug_map.header.frame_id = "base_link"
-                    self.debug_map.header.stamp = rospy.get_rostime()
-                    self.debug_map.data = map_data.astype(int).T.reshape(-1,)
-                    self.debug_pub.publish(self.debug_map)
-
-                break
+                    rospy.logwarn("Moving with reduced speed due to predicted collision. Vel[ang, lin]: %.3f, %.3f"%(cmd_vel.angular.z * velocity_scale, cmd_vel.linear.x * velocity_scale))
+            else:
+                rospy.logwarn("Collision for slow speed also. Vel[ang, lin]: %.3f, %.3f"%(cmd_vel.angular.z, cmd_vel.linear.x))
         
         # Collision imminent
         if (velocity_scale > 0.9):
@@ -239,7 +218,48 @@ class CollisionDetector():
         self.cmd_vel_pub.publish(cmd_vel)
 
 
+    def positive_collision(self, cmd_vel, time):
+        """
+            param T : Footprint transformation 
+        """
 
+        vel_vector = np.zeros((6))
+        vel_vector[2] = cmd_vel.angular.z
+        vel_vector[3] = cmd_vel.linear.x
+        vel_se3 = VecTose3(vel_vector)
+
+        T = MatrixExp6(vel_se3 * time)
+
+        footprint_projection = np.dot(T, self.footprint)
+    
+        # Coverting footprint projection to cell values
+        footprint_projection[0, :] = np.round(footprint_projection[0, :] / self.resolution + self.map_x_range / 2)
+        footprint_projection[1, :] = np.round(footprint_projection[1, :] / self.resolution + self.map_y_range / 2)
+
+        mask =  (footprint_projection[0,:] >= 0) & \
+                (footprint_projection[0,:] < self.map_x_range) & \
+                (footprint_projection[1,:] >= 0) & \
+                (footprint_projection[1,:] < self.map_y_range)
+
+        # Filtering out of boundary values and Type casting
+        footprint_projection = footprint_projection[:2, mask].astype(dtype=int)
+
+        cost = np.sum(self.map[footprint_projection[0, :], footprint_projection[1, :]])
+
+        if (cost > 0):
+            if self.DEBUG:
+                    # DEBUG print
+                    rospy.logwarn("Collision in %.2f second"%time)
+                    map_data = np.zeros((self.map_x_range, self.map_y_range))
+                    map_data[footprint_projection[0, :].astype(dtype=int), footprint_projection[1, :].astype(dtype=int)] = 40
+                    self.debug_map.header.frame_id = "base_link"
+                    self.debug_map.header.stamp = rospy.get_rostime()
+                    self.debug_map.data = map_data.astype(int).T.reshape(-1,)
+                    self.debug_pub.publish(self.debug_map)
+                    
+            return True
+        else:
+            return False
 
 if __name__ == '__main__':
     rospy.init_node('collision_detector')
