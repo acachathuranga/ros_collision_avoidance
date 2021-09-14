@@ -9,7 +9,7 @@ from utilities.spatial_tools import MatrixExp6, VecTose3
 from utilities.status_indicator import Indicator
 from utilities.audio_player import AudioPlayer
 from utilities.display import Display
-from std_msgs.msg import Bool
+from std_msgs.msg import String
 from std_srvs.srv import SetBool, SetBoolRequest, SetBoolResponse
 from sensor_msgs.msg import Joy
 import numpy as np
@@ -48,7 +48,7 @@ class CollisionDetector():
         self.cmd_vel_pub = rospy.Publisher(cmd_vel_output_topic, Twist, queue_size=100)
 
         # Collision status publisher
-        self.collision_status_publisher = rospy.Publisher(collision_status_topic, Bool, queue_size=100)
+        self.collision_status_publisher = rospy.Publisher(collision_status_topic, String, queue_size=100)
 
         # Enable collision avoidance
         self.enable_avoidance = True
@@ -164,7 +164,8 @@ class CollisionDetector():
 
             self.cmd_vel_pub.publish(cmd_vel)
             self.indicator.error()
-            self.display.obstacle_detection_off()
+            #self.display.obstacle_detection_off()
+            self.collision_status_publisher.publish(String("safety_off"))
             return
 
         # Perform obstacle avoidance
@@ -195,16 +196,16 @@ class CollisionDetector():
         # Collision imminent
         if (velocity_scale > 0.9):
             self.indicator.normal()
-            self.display.no_obstacle()
+            #self.display.no_obstacle()
+            self.collision_status_publisher.publish(String("clear"))
         elif (velocity_scale > 0.01):
             self.indicator.warning()
-            self.display.near_collision()
+            #self.display.near_collision()
+            self.collision_status_publisher.publish(String("near_collision"))
         else:
-            status = Bool()
-            status.data = True
-            self.collision_status_publisher.publish(status)
             self.indicator.critical()
-            self.display.imminent_collision()
+            #self.display.imminent_collision()
+            self.collision_status_publisher.publish(String("imminent_collision"))
 
         cmd_vel.angular.z = cmd_vel.angular.z * velocity_scale
         cmd_vel.linear.x = cmd_vel.linear.x * velocity_scale

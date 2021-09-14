@@ -18,7 +18,7 @@ slowing_look_ahead_time: 2
 # Stopping time look ahead
 stopping_look_ahead_time: 0.2
 # Collision status reporting topic
-collision_status: "collision_imminent"
+collision_status: "obstacle_detection"
 # Collision avoidance enable topic 
 avoidance_enable: "enable_avoidance"
 
